@@ -6,13 +6,7 @@
     <title>🎓 KI & Security Lernpfad – 8 Stunden</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%);
-            min-height: 100vh;
-            padding: 2rem;
-            color: #e0e0e0;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%); min-height: 100vh; padding: 2rem; color: #e0e0e0; }
         .container { max-width: 900px; margin: 0 auto; }
         h1 { text-align: center; font-size: 2rem; margin-bottom: 0.5rem; color: #fff; }
         .subtitle { text-align: center; color: #8ab4f8; margin-bottom: 0.5rem; font-size: 1.1rem; }
@@ -27,7 +21,7 @@
         .course-card.done .badge { opacity: 1; }
         .checkbox { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #5a7a9f; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
         .course-card.done .checkbox { background: #00c853; border-color: #00c853; }
-        .course-card.done .checkbox::after { content: '✓'; color: #fff; font-weight: bold; font-size: 1rem; }
+        .course-card.done .checkbox::after { content: '\2713'; color: #fff; font-weight: bold; font-size: 1rem; }
         .course-info { flex: 1; }
         .course-number { font-size: 0.75rem; color: #5a7a9f; margin-bottom: 0.2rem; }
         .course-title { font-size: 1rem; font-weight: 600; color: #fff; margin-bottom: 0.3rem; }
@@ -39,13 +33,15 @@
         .sync-status { font-size: 0.8rem; color: #8ab4f8; text-align: center; }
         .sync-status.success { color: #69f0ae; }
         .sync-status.error { color: #ff6b6b; }
+        .token-section { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin: 0.5rem 0; flex-wrap: wrap; }
+        .token-input { background: #1e3a5f; border: 1px solid #2d4a6f; color: #fff; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; width: 320px; }
+        .token-btn { background: #00c853; color: #0a1628; border: none; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         .footer { text-align: center; margin-top: 2rem; color: #5a7a9f; font-size: 0.85rem; }
         .confetti { display: none; text-align: center; font-size: 2rem; margin: 1rem 0; }
         .confetti.show { display: block; animation: bounce 0.5s ease; }
         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
-        .token-input { background: #1e3a5f; border: 1px solid #2d4a6f; color: #fff; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; width: 280px; }
-        .token-btn { background: #00c853; color: #0a1628; border: none; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
-        .token-section { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin: 0.5rem 0; flex-wrap: wrap; }
+        .readonly-badge { background: #ff9800; color: #000; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .last-update { font-size: 0.75rem; color: #5a7a9f; text-align: center; margin-top: 0.5rem; }
     </style>
 </head>
 <body>
@@ -53,15 +49,12 @@
         <h1>🎓 KI & Security Lernpfad</h1>
         <p class="subtitle">8 Stunden · LinkedIn Learning · Badges sammeln 🏆</p>
 
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill">0%</div>
-        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill">0%</div></div>
         <div class="stats">
             <span id="coursesCompleted">0 von 8 Kursen abgeschlossen</span>
             <span id="hoursCompleted">0 / 8,13 Stunden</span>
         </div>
-
-        <div class="confetti" id="confetti">🎉🏆🎊 Alle Kurse abgeschlossen! Du bist ein KI-Security-Pro! 🎊🏆🎉</div>
+        <div class="confetti" id="confetti">🎉🏆🎊 Alle Kurse abgeschlossen! 🎊🏆🎉</div>
 
         <div class="block-title">📘 Block 1: KI-Grundlagen</div>
 
@@ -160,41 +153,135 @@
         <div class="sync-bar">
             <span class="sync-status" id="syncStatus">⏳ Lade...</span>
         </div>
-        
+        <div class="token-section" id="tokenSection" style="display:none;">
+            <input type="password" class="token-input" id="tokenInput" placeholder="GitHub Token hier einfügen (einmalig)...">
+            <button class="token-btn" onclick="saveToken()">🔓 Freischalten</button>
+        </div>
+        <div class="last-update" id="lastUpdate"></div>
 
         <div class="footer">
-            <p>💡 Fortschritt wird pro Person im Browser gespeichert. Einfach URL an Kollegen teilen!</p>
-            <p style="margin-top:0.5rem">Erstellt am 31.05.2026 · Gesamtdauer: 8h 08min</p>
+            <p>💡 Fortschritt wird zentral gespeichert – dein Kollege sieht deinen Stand hier.</p>
+            <p style="margin-top:0.5rem">Gesamtdauer: 8h 08min · Quelle: LinkedIn Course List 2026</p>
         </div>
     </div>
 
     <script>
         const TOTAL_HOURS = 8.13;
-        const LS_KEY = 'ki-security-lernpfad-progress';
+        const REPO = 'andymization/lernpfad';
+        const STATE_FILE = 'state.json';
+        const TOKEN_KEY = 'lernpfad-gh-token';
+        let isOwner = false;
 
+        // ─── GitHub: State lesen (öffentlich, kein Token) ───────────
+        async function loadState() {
+            try {
+                const url = `https://raw.githubusercontent.com/${REPO}/main/${STATE_FILE}?t=${Date.now()}`;
+                const resp = await fetch(url);
+                if (resp.ok) return await resp.json();
+            } catch (e) {}
+            return { completed: [], updatedAt: null };
+        }
+
+        // ─── GitHub: State schreiben (braucht Token) ────────────────
+        async function saveState(completed) {
+            const token = localStorage.getItem(TOKEN_KEY);
+            if (!token) {
+                document.getElementById('tokenSection').style.display = 'flex';
+                setStatus('🔑 Token eingeben um Fortschritt zu speichern', 'error');
+                return false;
+            }
+
+            try {
+                setStatus('⏳ Speichere...', '');
+                const metaResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${STATE_FILE}`, {
+                    headers: { Authorization: `token ${token}` }
+                });
+                const meta = await metaResp.json();
+
+                const content = JSON.stringify({ completed, updatedAt: new Date().toISOString() }, null, 2);
+                const body = {
+                    message: `${completed.length}/8 Kurse erledigt`,
+                    content: btoa(unescape(encodeURIComponent(content))),
+                    sha: meta.sha
+                };
+
+                const writeResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${STATE_FILE}`, {
+                    method: 'PUT',
+                    headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (writeResp.ok) {
+                    setStatus('✅ Gespeichert & synchronisiert – ' + new Date().toLocaleTimeString(), 'success');
+                    showLastUpdate(new Date().toISOString());
+                    return true;
+                } else {
+                    if (writeResp.status === 401) {
+                        localStorage.removeItem(TOKEN_KEY);
+                        document.getElementById('tokenSection').style.display = 'flex';
+                        setStatus('🔑 Token ungültig – bitte neuen eingeben', 'error');
+                    } else {
+                        setStatus('⚠️ Fehler beim Speichern', 'error');
+                    }
+                    return false;
+                }
+            } catch (e) {
+                setStatus('⚠️ ' + e.message, 'error');
+                return false;
+            }
+        }
+
+        // ─── Token ──────────────────────────────────────────────────
+        function saveToken() {
+            const token = document.getElementById('tokenInput').value.trim();
+            if (token) {
+                localStorage.setItem(TOKEN_KEY, token);
+                document.getElementById('tokenSection').style.display = 'none';
+                document.getElementById('tokenInput').value = '';
+                isOwner = true;
+                enableCheckboxes();
+                setStatus('✅ Verbunden! Du kannst jetzt Kurse abhaken.', 'success');
+                saveState(getCompletedFromDOM());
+            }
+        }
+
+        // ─── DOM ────────────────────────────────────────────────────
         function getCompletedFromDOM() {
             return [...document.querySelectorAll('.course-card.done')].map(c => c.dataset.id);
         }
 
         function applyToDom(completed) {
+            document.querySelectorAll('.course-card').forEach(c => c.classList.remove('done'));
             (completed || []).forEach(id => {
                 const card = document.querySelector(`[data-id="${id}"]`);
                 if (card) card.classList.add('done');
             });
         }
 
-        function save() {
-            localStorage.setItem(LS_KEY, JSON.stringify(getCompletedFromDOM()));
-            setStatus('✅ Gespeichert', 'success');
+        function enableCheckboxes() {
+            document.querySelectorAll('.checkbox').forEach(cb => {
+                cb.style.cursor = 'pointer';
+                cb.style.opacity = '1';
+            });
         }
 
-        function toggleCourse(checkbox) {
+        function disableCheckboxes() {
+            document.querySelectorAll('.checkbox').forEach(cb => {
+                cb.style.cursor = 'default';
+                cb.style.opacity = '0.5';
+            });
+        }
+
+        // ─── Toggle ─────────────────────────────────────────────────
+        async function toggleCourse(checkbox) {
+            if (!isOwner) return; // Nur der Owner kann abhaken
             const card = checkbox.closest('.course-card');
             card.classList.toggle('done');
             updateStats();
-            save();
+            await saveState(getCompletedFromDOM());
         }
 
+        // ─── Stats ──────────────────────────────────────────────────
         function updateStats() {
             const cards = document.querySelectorAll('.course-card');
             const doneCards = document.querySelectorAll('.course-card.done');
@@ -215,14 +302,29 @@
             el.className = 'sync-status ' + (cls || '');
         }
 
-        // Init
-        (function() {
-            try {
-                const saved = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
-                applyToDom(saved);
-            } catch(e) {}
+        function showLastUpdate(dateStr) {
+            if (!dateStr) return;
+            const d = new Date(dateStr);
+            document.getElementById('lastUpdate').textContent = `Letztes Update: ${d.toLocaleDateString('de-DE')} um ${d.toLocaleTimeString('de-DE')}`;
+        }
+
+        // ─── Init ───────────────────────────────────────────────────
+        (async function init() {
+            const state = await loadState();
+            applyToDom(state.completed);
             updateStats();
-            setStatus('💡 Dein Fortschritt wird in diesem Browser gespeichert', '');
+            showLastUpdate(state.updatedAt);
+
+            const token = localStorage.getItem(TOKEN_KEY);
+            if (token) {
+                isOwner = true;
+                enableCheckboxes();
+                setStatus('✅ Verbunden – klicke Kurse zum Abhaken', 'success');
+            } else {
+                disableCheckboxes();
+                setStatus(`📋 Ansichtsmodus – ${state.completed.length}/8 Kurse erledigt`, '');
+                document.getElementById('tokenSection').style.display = 'flex';
+            }
         })();
     </script>
 </body>
