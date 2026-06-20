@@ -160,116 +160,41 @@
         <div class="sync-bar">
             <span class="sync-status" id="syncStatus">⏳ Lade...</span>
         </div>
-        <div class="token-section" id="tokenSection" style="display:none;">
-            <input type="password" class="token-input" id="tokenInput" placeholder="GitHub Token einfügen...">
-            <button class="token-btn" onclick="saveToken()">Verbinden</button>
-        </div>
+        
 
         <div class="footer">
-            <p>💡 Fortschritt wird über GitHub synchronisiert – funktioniert auf allen Geräten.</p>
+            <p>💡 Fortschritt wird pro Person im Browser gespeichert. Einfach URL an Kollegen teilen!</p>
             <p style="margin-top:0.5rem">Erstellt am 31.05.2026 · Gesamtdauer: 8h 08min</p>
         </div>
     </div>
 
     <script>
         const TOTAL_HOURS = 8.13;
-        const REPO = 'andymization/lernpfad';
-        const STATE_FILE = 'state.json';
-        const TOKEN_KEY = 'lernpfad-gh-token';
+        const LS_KEY = 'ki-security-lernpfad-progress';
 
-        // ─── GitHub API ─────────────────────────────────────────────
-        async function loadState() {
-            try {
-                const url = `https://raw.githubusercontent.com/${REPO}/main/${STATE_FILE}?t=${Date.now()}`;
-                const resp = await fetch(url);
-                if (resp.ok) return await resp.json();
-            } catch (e) {}
-            return { completed: [] };
-        }
-
-        async function saveState(completed) {
-            const token = localStorage.getItem(TOKEN_KEY);
-            if (!token) {
-                document.getElementById('tokenSection').style.display = 'flex';
-                setStatus('🔑 Bitte Token eingeben um zu speichern', 'error');
-                return false;
-            }
-
-            try {
-                // Get current file SHA
-                const metaResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${STATE_FILE}`, {
-                    headers: { Authorization: `token ${token}` }
-                });
-                const meta = await metaResp.json();
-                const sha = meta.sha;
-
-                // Update file
-                const content = JSON.stringify({ completed, updatedAt: new Date().toISOString() }, null, 2);
-                const body = {
-                    message: `update: ${completed.length} Kurse erledigt`,
-                    content: btoa(unescape(encodeURIComponent(content))),
-                    sha: sha
-                };
-
-                const writeResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${STATE_FILE}`, {
-                    method: 'PUT',
-                    headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-
-                if (writeResp.ok) {
-                    setStatus('✅ Synchronisiert – ' + new Date().toLocaleTimeString(), 'success');
-                    return true;
-                } else {
-                    const err = await writeResp.json();
-                    setStatus('⚠️ ' + (err.message || 'Fehler'), 'error');
-                    if (writeResp.status === 401) {
-                        localStorage.removeItem(TOKEN_KEY);
-                        document.getElementById('tokenSection').style.display = 'flex';
-                    }
-                    return false;
-                }
-            } catch (e) {
-                setStatus('⚠️ ' + e.message, 'error');
-                return false;
-            }
-        }
-
-        // ─── Token ──────────────────────────────────────────────────
-        function saveToken() {
-            const token = document.getElementById('tokenInput').value.trim();
-            if (token) {
-                localStorage.setItem(TOKEN_KEY, token);
-                document.getElementById('tokenSection').style.display = 'none';
-                document.getElementById('tokenInput').value = '';
-                setStatus('🔑 Token gespeichert!', 'success');
-                // Sofort speichern
-                saveState(getCompletedFromDOM());
-            }
-        }
-
-        // ─── DOM ────────────────────────────────────────────────────
         function getCompletedFromDOM() {
             return [...document.querySelectorAll('.course-card.done')].map(c => c.dataset.id);
         }
 
         function applyToDom(completed) {
-            document.querySelectorAll('.course-card').forEach(c => c.classList.remove('done'));
             (completed || []).forEach(id => {
                 const card = document.querySelector(`[data-id="${id}"]`);
                 if (card) card.classList.add('done');
             });
         }
 
-        // ─── Kurs toggle ────────────────────────────────────────────
-        async function toggleCourse(checkbox) {
+        function save() {
+            localStorage.setItem(LS_KEY, JSON.stringify(getCompletedFromDOM()));
+            setStatus('✅ Gespeichert', 'success');
+        }
+
+        function toggleCourse(checkbox) {
             const card = checkbox.closest('.course-card');
             card.classList.toggle('done');
             updateStats();
-            await saveState(getCompletedFromDOM());
+            save();
         }
 
-        // ─── Stats ──────────────────────────────────────────────────
         function updateStats() {
             const cards = document.querySelectorAll('.course-card');
             const doneCards = document.querySelectorAll('.course-card.done');
@@ -290,19 +215,14 @@
             el.className = 'sync-status ' + (cls || '');
         }
 
-        // ─── Init ───────────────────────────────────────────────────
-        (async function init() {
-            const state = await loadState();
-            applyToDom(state.completed);
+        // Init
+        (function() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+                applyToDom(saved);
+            } catch(e) {}
             updateStats();
-
-            const token = localStorage.getItem(TOKEN_KEY);
-            if (!token) {
-                document.getElementById('tokenSection').style.display = 'flex';
-                setStatus('🔑 Einmalig: Token eingeben für Sync', '');
-            } else {
-                setStatus('✅ Verbunden – Stand geladen', 'success');
-            }
+            setStatus('💡 Dein Fortschritt wird in diesem Browser gespeichert', '');
         })();
     </script>
 </body>
