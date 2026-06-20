@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 KI & Security Lernpfad – 8 Stunden</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #e0e0e0;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        .subtitle {
+            text-align: center;
+            color: #8ab4f8;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        .progress-bar {
+            background: #1e3a5f;
+            border-radius: 12px;
+            height: 28px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #2d4a6f;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #00c853, #69f0ae);
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #0a1628;
+            font-size: 0.85rem;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: #8ab4f8;
+        }
+        .block-title {
+            font-size: 1.2rem;
+            color: #69f0ae;
+            margin: 2rem 0 1rem;
+            padding-left: 0.5rem;
+            border-left: 4px solid #69f0ae;
+        }
+        .course-card {
+            background: #152238;
+            border: 1px solid #2d4a6f;
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+        .course-card:hover {
+            border-color: #8ab4f8;
+            transform: translateX(4px);
+        }
+        .course-card.done {
+            border-color: #00c853;
+            background: #0d2818;
+        }
+        .course-card.done .course-title { text-decoration: line-through; color: #69f0ae; }
+        .course-card.done .badge { opacity: 1; }
+        .checkbox {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #5a7a9f;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .course-card.done .checkbox {
+            background: #00c853;
+            border-color: #00c853;
+        }
+        .course-card.done .checkbox::after {
+            content: '✓';
+            color: #fff;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .course-info { flex: 1; }
+        .course-number {
+            font-size: 0.75rem;
+            color: #5a7a9f;
+            margin-bottom: 0.2rem;
+        }
+        .course-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.3rem;
+        }
+        .course-meta {
+            font-size: 0.8rem;
+            color: #8ab4f8;
+            display: flex;
+            gap: 1rem;
+        }
+        .course-link {
+            background: linear-gradient(135deg, #0077b5, #005e93);
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        .course-link:hover {
+            background: linear-gradient(135deg, #0088cc, #0077b5);
+            transform: scale(1.05);
+        }
+        .badge {
+            font-size: 1.3rem;
+            opacity: 0.2;
+            transition: opacity 0.3s;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #5a7a9f;
+            font-size: 0.85rem;
+        }
+        .confetti { display: none; text-align: center; font-size: 2rem; margin: 1rem 0; }
+        .confetti.show { display: block; animation: bounce 0.5s ease; }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        .sync-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.8rem;
+            margin: 1rem 0 0.5rem;
+            flex-wrap: wrap;
+        }
+        .sync-btn {
+            background: linear-gradient(135deg, #1a73e8, #0d5bbd);
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .sync-btn:hover { transform: scale(1.05); background: linear-gradient(135deg, #2b83f8, #1a73e8); }
+        .sync-btn.connected { background: linear-gradient(135deg, #00c853, #009624); }
+        .sync-status {
+            font-size: 0.8rem;
+            color: #8ab4f8;
+            text-align: center;
+        }
+        .sync-status.success { color: #69f0ae; }
+        .sync-status.error { color: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 KI & Security Lernpfad</h1>
+        <p class="subtitle">8 Stunden · LinkedIn Learning · Badges sammeln 🏆</p>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+        <div class="stats">
+            <span id="coursesCompleted">0 von 8 Kursen abgeschlossen</span>
+            <span id="hoursCompleted">0 / 8,13 Stunden</span>
+        </div>
+
+        <div class="confetti" id="confetti">🎉🏆🎊 Alle Kurse abgeschlossen! Du bist ein KI-Security-Pro! 🎊🏆🎉</div>
+
+        <div class="block-title">📘 Block 1: KI-Grundlagen</div>
+
+        <div class="course-card" data-hours="1.25" data-id="1">
+            <div class="checkbox" onclick="toggleCourse(this)"></div>
+            <div class="course-info">
+                <div class="course-number">Kurs 1 von 8</div>
+                <div class="course-title">Programming Foundations: Artificial Intelligence</div>
+                <div class="course-meta">
+                    <span>⏱ 1h 15min</span>
+                    <span>📊 Beginner</span>
+                </div>
+            </div>
+            <a class="course-link" href="https://www.linkedin.com/learning/programming-foundations-artificial-intelligence" target="_blank">▶ Starten</a>
+            <div class="badge">🏅</div>
+        </div>
+
+        <div class="course-card" data-hours="1.05" data-id="2">
+            <div class="checkbox" onclick="toggleCourse(this)"></div>
+            <div class="course-info">
+                <div class="course-number">Kurs 2 von 8</div>
+                <div class="course-title">Introduction to Prompt Engineering for Generative AI</div>
+                <div class="course-meta">
+                    <span>⏱ 1h 03min</span>
+                    <span>📊 Beginner</span>
+                </div>
+            </div>
+            <a class="course-link" href="https://www.linkedin.com/learning/introduction-to-prompt-engineering-for-generative-ai-24636124" target="_blank">▶ Starten</a>
+            <div class="badge">🏅</div>
+        </div>
+
+        <div class="course-card" data-hours="1.18" data-id="3">
+            <div class="checkbox" onclick="toggleCourse(this)"></div>
+            <div class="course-info">
+                <div class="course-number">Kurs 3 von 8</div>
+                <div class="course-title">Demystifying ChatGPT and Generative AI: What Every Professional Needs to Know</div>
+                <div class="course-meta">
+                    <span>⏱ 1h 11min</span>
+                    <span>📊 Beginner/Intermediate</span>
+                </div>
+            </div>
+            <a class="course-link" href="https://www.linkedin.com/learning/demystifying-chatgpt-and-generative-ai-what-every-professional-needs-to-know" target="_blank">▶ Starten</a>
+            <div class="badge">🏅</div>
+        </div>
+
+        <div class="block-title">🔌 Block 2: KI + APIs – Daten lesen über Schnittstellen</div>
+
+        <div class="course-card" data-hours="0.98" data-id="4">
+            <div class="checkbox" onclick="toggleCourse(this)"></div>
+            <div class="course-info">
+                <div class="course-number">Kurs 4 von 8</div>
+                <div class="course-title">Hands-On OpenAI API: Building a Real-World Solution</div>
+                <div class="course-meta">
+                    <span>⏱ 0h 59min</span>
+                    <span>📊 Beginner</span>
+                </div>
+            </div>
+            <a class="course-link" href="https://www.linkedin.com/learning/hands-on-openai-api-building-a-real-world-solution" target="_blank">▶ Starten</a>
+            <div class="badge">🏅</div>
+        </div>
+
+        <div class="block-title">🔒 Block 3: API & KI Security</div>
+
+        <div class="course-card" data-hours="0.70" data-id="5">
+            <div class="checkbox" onclick="toggleCourse(this)"></div>
+            <div class="course-info">
+                <div class="course-number">Kurs 5 von 8</div>
+                <div class="course-title">The OWASP API 2023 Top 10: An Overview</div>
+                <div class="course-meta">
+                    <span>⏱ 0h 42min</span>
+                    <span>📊 Intermediate</span>
+                </div>
+            </div>
+            <a class="course-link" href="https://www.linkedin.com/learning/the-owasp-api-2023-top-10-an-overview" target="_blank">▶ Starten</a>
+            <div class="badge">🏅</div>
+        </div>
+
+        <div class="course-card" data-hours="0.85" data-id="6">
+            <div class="checkbox" onclick="toggleCourse(this)"></div>
+            <div class="course-info">
+                <div class="course-number">Kurs 6 von 8</div>
+                <div class="course-title">The OWASP Top 10 for Large Language Model (LLM) Applications: An Overview</div>
+                <div class="course-meta">
+                    <span>⏱ 0h 51min</span>
+                    <span>📊 Intermediate</span>
+                </div>
+            </div>
+            <a class="course-link" href="https://www.linkedin.com/learning/the-owasp-top-10-for-large-language-model-llm-applications-an-overview" target="_blank">▶ Starten</a>
+            <div class="badge">🏅</div>
+        </div>
+
+        <div class="course-card" data-hours="0.87" data-id="7">
+            <div class="checkbox" onclick="toggleCourse(this)"></div>
+            <div class="course-info">
+                <div class="course-number">Kurs 7 von 8</div>
+                <div class="course-title">LLM Security: How to Protect Your Generative AI Investments</div>
+                <div class="course-meta">
+                    <span>⏱ 0h 52min</span>
+                    <span>📊 Intermediate</span>
+                </div>
+            </div>
+            <a class="course-link" href="https://www.linkedin.com/learning/llm-security-how-to-protect-your-generative-ai-investments" target="_blank">▶ Starten</a>
+            <div class="badge">🏅</div>
+        </div>
+
+        <div class="course-card" data-hours="1.25" data-id="8">
+            <div class="checkbox" onclick="toggleCourse(this)"></div>
+            <div class="course-info">
+                <div class="course-number">Kurs 8 von 8</div>
+                <div class="course-title">Securing the Use of Generative AI in Your Organization</div>
+                <div class="course-meta">
+                    <span>⏱ 1h 15min</span>
+                    <span>📊 Intermediate</span>
+                </div>
+            </div>
+            <a class="course-link" href="https://www.linkedin.com/learning/securing-the-use-of-generative-ai-in-your-organization" target="_blank">▶ Starten</a>
+            <div class="badge">🏅</div>
+        </div>
+
+        <div class="sync-bar">
+            <button class="sync-btn" id="syncBtn" onclick="connectFile()">📂 Sync-Datei verbinden</button>
+            <span class="sync-status" id="syncStatus">Noch nicht verbunden</span>
+        </div>
+
+        <div class="footer">
+            <p>💡 Fortschritt wird automatisch aus der JSON-Datei geladen (beide Systeme).</p>
+            <p style="margin-top:0.3rem">Zum Speichern auf Windows: "Sync-Datei verbinden" klicken. Auf Mac: "Speichern" lädt die JSON-Datei herunter → im selben Ordner ablegen.</p>
+            <p style="margin-top:0.5rem">Erstellt am 31.05.2026 · Gesamtdauer: 8h 08min</p>
+        </div>
+    </div>
+
+    <!-- State wird per <script src> geladen – funktioniert auf ALLEN Systemen ohne CORS -->
+    <script>var SYNC_STATE = null;</script>
+    
+
+    <script>
+        const TOTAL_HOURS = 8.13;
+        const STATE_JS = 'KI-Security-Lernpfad-Status.js';
+        const LS_KEY = 'ki-security-lernpfad-progress';
+        let dirHandle = null;
+        let canWriteDirect = false;
+
+        // ─── localStorage ──────────────────────────────────────────
+        function readLocalStorage() {
+            try {
+                const raw = localStorage.getItem(LS_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return [];
+        }
+
+        function writeLocalStorage(completed) {
+            try { localStorage.setItem(LS_KEY, JSON.stringify(completed)); } catch (e) {}
+        }
+
+        // ─── State als .js-Datei erzeugen ───────────────────────────
+        function buildStateJS(completed) {
+            const state = { completed, updatedAt: new Date().toISOString() };
+            return 'var SYNC_STATE = ' + JSON.stringify(state, null, 2) + ';\n';
+        }
+
+        // ─── Schreiben: File System Access API (Windows Edge) ───────
+        async function writeStateDirect(completed) {
+            if (!dirHandle) return false;
+            try {
+                const fh = await dirHandle.getFileHandle(STATE_JS, { create: true });
+                const writable = await fh.createWritable();
+                await writable.write(buildStateJS(completed));
+                await writable.close();
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // ─── Schreiben: Download-Fallback (Mac) ─────────────────────
+        function writeStateDownload(completed) {
+            const blob = new Blob([buildStateJS(completed)], { type: 'application/javascript' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = STATE_JS;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        // ─── IndexedDB für Dir-Handle ───────────────────────────────
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open('LernpfadSync', 1);
+                req.onupgradeneeded = () => req.result.createObjectStore('handles');
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function saveDirHandle(handle) {
+            try {
+                const db = await openDB();
+                const tx = db.transaction('handles', 'readwrite');
+                tx.objectStore('handles').put(handle, 'syncDir');
+            } catch (e) {}
+        }
+
+        async function loadDirHandle() {
+            try {
+                const db = await openDB();
+                const tx = db.transaction('handles', 'readonly');
+                const req = tx.objectStore('handles').get('syncDir');
+                return new Promise(r => { req.onsuccess = () => r(req.result || null); req.onerror = () => r(null); });
+            } catch (e) { return null; }
+        }
+
+        // ─── Merge ──────────────────────────────────────────────────
+        function mergeCompleted(...sources) {
+            const set = new Set();
+            sources.forEach(s => { if (Array.isArray(s)) s.forEach(id => set.add(id)); });
+            return [...set].sort();
+        }
+
+        // ─── DOM ↔ State ────────────────────────────────────────────
+        function getCompletedFromDOM() {
+            return [...document.querySelectorAll('.course-card.done')].map(c => c.dataset.id);
+        }
+
+        function applyToDom(completed) {
+            document.querySelectorAll('.course-card').forEach(c => c.classList.remove('done'));
+            (completed || []).forEach(id => {
+                const card = document.querySelector(`[data-id="${id}"]`);
+                if (card) card.classList.add('done');
+            });
+        }
+
+        // ─── Speichern ─────────────────────────────────────────────
+        async function saveAll() {
+            const completed = getCompletedFromDOM();
+            writeLocalStorage(completed);
+
+            if (canWriteDirect) {
+                const ok = await writeStateDirect(completed);
+                setStatus(ok ? '✅ Gespeichert – ' + new Date().toLocaleTimeString() : '⚠️ Speichern fehlgeschlagen', ok ? 'success' : 'error');
+            } else {
+                setStatus('💾 Browser-Cache gespeichert. Klicke "💾 Speichern" für Sync.', '');
+            }
+        }
+
+        // ─── Verbinden / Speichern (Button) ─────────────────────────
+        async function connectFile() {
+            if (window.showDirectoryPicker) {
+                try {
+                    dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                    await saveDirHandle(dirHandle);
+                    canWriteDirect = true;
+
+                    await writeStateDirect(getCompletedFromDOM());
+
+                    const btn = document.getElementById('syncBtn');
+                    btn.textContent = '✅ Verbunden';
+                    btn.classList.add('connected');
+                    setStatus('✅ Schreibzugriff aktiv – Änderungen werden automatisch gespeichert', 'success');
+                    return;
+                } catch (e) {
+                    if (e.name === 'AbortError') return;
+                }
+            }
+
+            // Fallback: Download der .js-Datei
+            writeStateDownload(getCompletedFromDOM());
+            setStatus('💾 Datei heruntergeladen – bitte im SELBEN Ordner wie diese HTML-Datei speichern/ersetzen!', 'success');
+        }
+
+        // ─── Auto-Reconnect (Windows) ───────────────────────────────
+        async function tryAutoConnect() {
+            if (!window.showDirectoryPicker) return;
+            try {
+                const saved = await loadDirHandle();
+                if (saved) {
+                    const perm = await saved.requestPermission({ mode: 'readwrite' });
+                    if (perm === 'granted') {
+                        dirHandle = saved;
+                        canWriteDirect = true;
+                        const btn = document.getElementById('syncBtn');
+                        btn.textContent = '✅ Verbunden';
+                        btn.classList.add('connected');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // ─── Kurs an/abhaken ────────────────────────────────────────
+        async function toggleCourse(checkbox) {
+            const card = checkbox.closest('.course-card');
+            card.classList.toggle('done');
+            updateStats();
+            await saveAll();
+        }
+
+        // ─── Statistiken ────────────────────────────────────────────
+        function updateStats() {
+            const cards = document.querySelectorAll('.course-card');
+            const doneCards = document.querySelectorAll('.course-card.done');
+            let hoursCompleted = 0;
+            doneCards.forEach(card => { hoursCompleted += parseFloat(card.dataset.hours); });
+
+            const percent = Math.round((doneCards.length / cards.length) * 100);
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressFill').textContent = percent + '%';
+            document.getElementById('coursesCompleted').textContent =
+                `${doneCards.length} von ${cards.length} Kursen abgeschlossen`;
+            document.getElementById('hoursCompleted').textContent =
+                `${hoursCompleted.toFixed(1)} / ${TOTAL_HOURS} Stunden`;
+
+            const confetti = document.getElementById('confetti');
+            confetti.classList.toggle('show', doneCards.length === cards.length);
+        }
+
+        function setStatus(msg, cls) {
+            const el = document.getElementById('syncStatus');
+            el.textContent = msg;
+            el.className = 'sync-status ' + (cls || '');
+        }
+
+        // ─── INIT ───────────────────────────────────────────────────
+        (async function init() {
+            // 1. localStorage laden
+            const lsCompleted = readLocalStorage();
+
+            // 2. Sync-Datei wurde per <script src> geladen → SYNC_STATE
+            const fileCompleted = (SYNC_STATE && SYNC_STATE.completed) ? SYNC_STATE.completed : [];
+
+            // 3. Merge: beide Quellen vereinen
+            const merged = mergeCompleted(lsCompleted, fileCompleted);
+
+            if (merged.length > 0) {
+                applyToDom(merged);
+                writeLocalStorage(merged);
+            }
+            updateStats();
+
+            const parts = [];
+            if (lsCompleted.length > 0) parts.push(`${lsCompleted.length}× Browser-Cache`);
+            if (fileCompleted.length > 0) parts.push(`${fileCompleted.length}× Sync-Datei`);
+            if (parts.length > 0) {
+                setStatus(`📦 Geladen: ${parts.join(' + ')} → ${merged.length} Kurs(e) erledigt`, 'success');
+            }
+
+            // 4. Schreibzugriff wiederherstellen
+            await tryAutoConnect();
+        })();
+    </script>
+</body>
+</html>
