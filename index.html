@@ -308,6 +308,13 @@
             document.getElementById('lastUpdate').textContent = `Letztes Update: ${d.toLocaleDateString('de-DE')} um ${d.toLocaleTimeString('de-DE')}`;
         }
 
+        // ─── Token aus URL-Hash lesen (#token=ghp_xxx) ──────────────
+        function getTokenFromHash() {
+            const hash = window.location.hash;
+            const match = hash.match(/token=([^&]+)/);
+            return match ? match[1] : null;
+        }
+
         // ─── Init ───────────────────────────────────────────────────
         (async function init() {
             const state = await loadState();
@@ -315,10 +322,15 @@
             updateStats();
             showLastUpdate(state.updatedAt);
 
+            // Token-Quellen: 1) URL-Hash  2) localStorage
+            const hashToken = getTokenFromHash();
+            if (hashToken) localStorage.setItem(TOKEN_KEY, hashToken);
             const token = localStorage.getItem(TOKEN_KEY);
+
             if (token) {
                 isOwner = true;
                 enableCheckboxes();
+                document.getElementById('tokenSection').style.display = 'none';
                 setStatus('✅ Verbunden – klicke Kurse zum Abhaken', 'success');
             } else {
                 disableCheckboxes();
