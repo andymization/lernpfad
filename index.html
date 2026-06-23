@@ -205,8 +205,8 @@
             applyToDom(currentState);
             updateStats();
             showLastUpdate(currentState.updatedAt);
-            if (isOwner) setStatus(t('connected'), 'success');
-            else setStatus(t('viewMode', Object.keys(currentState.courses).length, totalCourses), '');
+            if (isOwner) { enableCheckboxes(); setStatus(t('connected'), 'success'); }
+            else { disableCheckboxes(); setStatus(t('viewMode', Object.keys(currentState.courses).length, totalCourses), ''); }
         }
 
         // ─── Courses JSON laden ──────────────────────────────────────
