@@ -212,13 +212,28 @@
         let isOwner = false;
         let currentState = { courses: {}, updatedAt: null };
 
-        // ─── GitHub: State lesen (öffentlich) ────────────────────────
+        // ─── GitHub: State lesen ─────────────────────────────────────
         async function loadState() {
             try {
-                const url = `https://raw.githubusercontent.com/${REPO}/main/${STATE_FILE}?t=${Date.now()}`;
-                const resp = await fetch(url);
-                if (resp.ok) {
-                    const data = await resp.json();
+                const token = localStorage.getItem(TOKEN_KEY);
+                let data;
+
+                if (token) {
+                    // Owner: über API lesen (immer aktuell, kein Cache)
+                    const resp = await fetch(`https://api.github.com/repos/${REPO}/contents/${STATE_FILE}`, {
+                        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+                    });
+                    if (resp.ok) {
+                        const meta = await resp.json();
+                        data = JSON.parse(decodeURIComponent(escape(atob(meta.content))));
+                    }
+                } else {
+                    // Kollege: über raw (öffentlich, cached)
+                    const resp = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${STATE_FILE}?t=${Date.now()}`);
+                    if (resp.ok) data = await resp.json();
+                }
+
+                if (data) {
                     // Migration: altes Format (completed:[]) → neues (courses:{})
                     if (data.completed && Array.isArray(data.completed)) {
                         const migrated = { courses: {}, updatedAt: data.updatedAt };
