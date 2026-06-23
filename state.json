@@ -1,9 +1,21 @@
 {
-  "completed": [
-    "1",
-    "2",
-    "3",
-    "4"
-  ],
-  "updatedAt": "2026-06-22T09:11:08.354Z"
+  "updatedAt": "2026-06-23T09:42:46.249Z",
+  "courses": {
+    "3": {
+      "completedAt": "2026-06-22T09:00:00.000Z",
+      "cert": null
+    },
+    "1": {
+      "completedAt": "2026-06-11T12:00:00.000Z",
+      "cert": null
+    },
+    "4": {
+      "completedAt": "2026-06-22T09:11:00.000Z",
+      "cert": null
+    },
+    "2": {
+      "completedAt": "2026-06-15T12:00:00.000Z",
+      "cert": null
+    }
+  }
 }
