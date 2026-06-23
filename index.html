@@ -384,11 +384,24 @@
             }
         }
 
+        // ─── Badge als Cert-Link ─────────────────────────────────────
+        function updateBadge(badgeEl, certUrl) {
+            if (certUrl) {
+                badgeEl.innerHTML = `<a href="${certUrl}" target="_blank" rel="noopener" title="Certificate" style="text-decoration:none;">🏅</a>`;
+                badgeEl.style.cursor = 'pointer';
+            } else {
+                badgeEl.innerHTML = '🏅';
+                badgeEl.style.cursor = 'default';
+            }
+        }
+
         // ─── Proof rendern ───────────────────────────────────────────
         function renderProof(card, courseData) {
             const proofEl = card.querySelector('.proof-section');
-            if (!courseData) { proofEl.style.display = 'none'; proofEl.innerHTML = ''; return; }
+            const badgeEl = card.querySelector('.badge');
+            if (!courseData) { proofEl.style.display = 'none'; proofEl.innerHTML = ''; updateBadge(badgeEl, null); return; }
             proofEl.style.display = 'block';
+            updateBadge(badgeEl, courseData.cert);
             const loc = lang === 'en' ? 'en-US' : 'de-DE';
             const dateStr = courseData.completedAt ? new Date(courseData.completedAt).toLocaleDateString(loc, { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–';
             let certHtml = '';
