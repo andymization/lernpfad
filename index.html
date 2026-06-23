@@ -10,8 +10,9 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%); min-height: 100vh; padding: 2rem; color: #e0e0e0; }
         .page-wrapper { max-width: 900px; margin: 0 auto; border: 1px solid #2d4a6f; border-radius: 16px; overflow: hidden; background: #0f1e34; padding: 2rem; }
         .container { padding: 0; }
-        .year-footer { background: #0a1628; border: 1px solid #2d4a6f; border-radius: 10px; padding: 0.8rem 1.5rem; margin-top: 1.5rem; display: flex; justify-content: center; align-items: center; gap: 0.3rem; }
-        .year-footer-label { color: #5a7a9f; font-size: 0.85rem; margin-right: 0.5rem; }
+        .year-nav { background: #0a1628; border: 1px solid #2d4a6f; border-radius: 10px; padding: 0.8rem 1.5rem; display: flex; justify-content: center; align-items: center; gap: 0.3rem; }
+        .year-nav.pos-top { margin-bottom: 1.5rem; }
+        .year-nav.pos-bottom { margin-top: 1.5rem; }
         .year-footer-btn { background: transparent; border: 1px solid #2d4a6f; color: #8ab4f8; padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 700; transition: all 0.2s; }
         .year-footer-btn:hover { background: #1e3a5f; border-color: #2d4a6f; }
         .year-footer-btn.active { background: #00c853; color: #0a1628; border-color: #00c853; }
@@ -82,6 +83,7 @@
 </head>
 <body>
     <div class="page-wrapper">
+        <div class="year-nav pos-top" id="yearNavTop" style="display:none;"></div>
         <div class="container">
         <h1>🎓 <span id="pageTitle"></span></h1>
         <p class="subtitle"><span id="pageSubtitle"></span> 🏆</p>
@@ -115,7 +117,7 @@
             <p style="margin-top:0.5rem" id="footer2"></p>
         </div>
     </div><!-- /container -->
-        <div class="year-footer" id="yearFooter"></div>
+        <div class="year-nav pos-bottom" id="yearNavBottom"></div>
     </div><!-- /page-wrapper -->
 
     <script>
@@ -201,12 +203,25 @@
             return [currentYear];
         }
 
+        function getNavPosition() {
+            return new URLSearchParams(window.location.search).get('nav') || 'bottom';
+        }
+
         function renderYearNav() {
-            const container = document.getElementById('yearFooter');
+            const pos = getNavPosition();
+            const topEl = document.getElementById('yearNavTop');
+            const bottomEl = document.getElementById('yearNavBottom');
             const sorted = [...availableYears].sort((a, b) => b - a);
-            container.innerHTML = sorted.map(y =>
+            const html = sorted.map(y =>
                 `<button class="year-footer-btn ${y === currentYear ? 'active' : ''}" onclick="switchYear(${y})">${y}</button>`
             ).join('');
+            if (pos === 'top') {
+                topEl.innerHTML = html; topEl.style.display = 'flex';
+                bottomEl.innerHTML = ''; bottomEl.style.display = 'none';
+            } else {
+                bottomEl.innerHTML = html; bottomEl.style.display = 'flex';
+                topEl.innerHTML = ''; topEl.style.display = 'none';
+            }
         }
 
         async function switchYear(year) {
