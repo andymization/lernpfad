@@ -10,9 +10,14 @@
         .container { max-width: 900px; margin: 0 auto; }
         h1 { text-align: center; font-size: 2rem; margin-bottom: 0.5rem; color: #fff; }
         .subtitle { text-align: center; color: #8ab4f8; margin-bottom: 0.5rem; font-size: 1.1rem; }
-        .lang-switch { text-align: center; margin-bottom: 0.5rem; }
-        .lang-btn { background: none; border: 1px solid #2d4a6f; color: #8ab4f8; padding: 0.2rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin: 0 0.2rem; }
+        .top-bar { display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+        .lang-switch { display: flex; gap: 0.3rem; }
+        .lang-btn { background: none; border: 1px solid #2d4a6f; color: #8ab4f8; padding: 0.2rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
         .lang-btn.active { background: #0077b5; color: #fff; border-color: #0077b5; }
+        .year-switch { display: flex; gap: 0.3rem; align-items: center; }
+        .year-btn { background: none; border: 1px solid #2d4a6f; color: #8ab4f8; padding: 0.2rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: 600; }
+        .year-btn.active { background: #00c853; color: #0a1628; border-color: #00c853; }
+        .year-btn:hover:not(.active) { border-color: #8ab4f8; }
         .progress-bar { background: #1e3a5f; border-radius: 12px; height: 28px; margin: 1.5rem 0; overflow: hidden; border: 1px solid #2d4a6f; }
         .progress-fill { background: linear-gradient(90deg, #00c853, #69f0ae); height: 100%; border-radius: 12px; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #0a1628; font-size: 0.85rem; }
         .stats { display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-size: 0.9rem; color: #8ab4f8; }
@@ -65,9 +70,12 @@
     <div class="container">
         <h1>🎓 <span id="pageTitle"></span></h1>
         <p class="subtitle"><span id="pageSubtitle"></span> 🏆</p>
-        <div class="lang-switch">
-            <button class="lang-btn" onclick="setLang('de')">🇩🇪 Deutsch</button>
-            <button class="lang-btn" onclick="setLang('en')">🇺🇸 English</button>
+        <div class="top-bar">
+            <div class="year-switch" id="yearSwitch"></div>
+            <div class="lang-switch">
+                <button class="lang-btn" onclick="setLang('de')">🇩🇪 Deutsch</button>
+                <button class="lang-btn" onclick="setLang('en')">🇺🇸 English</button>
+            </div>
         </div>
 
         <div class="progress-bar"><div class="progress-fill" id="progressFill">0%</div></div>
@@ -144,37 +152,80 @@
         function t(key, ...args) { const v = i18n[lang][key]; return typeof v === 'function' ? v(...args) : v; }
 
         const REPO = 'andymization/learning-path';
-        const STATE_FILE = 'state.json';
         const TOKEN_KEY = 'lernpfad-gh-token';
         let isOwner = false;
         let currentState = { courses: {}, updatedAt: null };
         let coursesData = null;
         let totalCourses = 0;
         let totalHours = 0;
+        let currentYear = new Date().getFullYear();
+        let availableYears = [];
+
+        // ─── Available years erkennen ────────────────────────────────
+        async function detectYears() {
+            const token = localStorage.getItem(TOKEN_KEY);
+            try {
+                let files;
+                if (token) {
+                    const resp = await fetch(`https://api.github.com/repos/${REPO}/contents/`, {
+                        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+                    });
+                    if (resp.ok) files = await resp.json();
+                } else {
+                    const resp = await fetch(`https://api.github.com/repos/${REPO}/contents/`);
+                    if (resp.ok) files = await resp.json();
+                }
+                if (files) {
+                    const years = files
+                        .map(f => f.name.match(/^courses-(\d{4})\.json$/))
+                        .filter(m => m)
+                        .map(m => parseInt(m[1]))
+                        .sort((a, b) => b - a);
+                    return years.length ? years : [currentYear];
+                }
+            } catch (e) {}
+            return [currentYear];
+        }
+
+        function renderYearNav() {
+            const container = document.getElementById('yearSwitch');
+            container.innerHTML = availableYears.map(y =>
+                `<button class="year-btn ${y === currentYear ? 'active' : ''}" onclick="switchYear(${y})">${y}</button>`
+            ).join('');
+        }
+
+        async function switchYear(year) {
+            currentYear = year;
+            renderYearNav();
+            setStatus(t('loading'), '');
+            coursesData = await loadCourses(year);
+            if (!coursesData) { setStatus(`⚠️ courses-${year}.json not found`, 'error'); return; }
+            currentState = await loadState(year);
+            renderCourses();
+            applyToDom(currentState);
+            updateStats();
+            showLastUpdate(currentState.updatedAt);
+            if (isOwner) setStatus(t('connected'), 'success');
+            else setStatus(t('viewMode', Object.keys(currentState.courses).length, totalCourses), '');
+        }
 
         // ─── Courses JSON laden ──────────────────────────────────────
-        async function loadCourses() {
+        async function loadCourses(year) {
             const token = localStorage.getItem(TOKEN_KEY);
-            // Determine which courses file to load (newest first)
-            const year = new Date().getFullYear();
-            const files = [`courses-${year}.json`, `courses-${year - 1}.json`, 'courses-2026.json'];
-
-            for (const file of files) {
-                try {
-                    let data;
-                    if (token) {
-                        const resp = await fetch(`https://api.github.com/repos/${REPO}/contents/${file}`, {
-                            headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
-                        });
-                        if (resp.ok) { const m = await resp.json(); data = JSON.parse(decodeURIComponent(escape(atob(m.content)))); }
-                    } else {
-                        const resp = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${file}?t=${Date.now()}`);
-                        if (resp.ok) data = await resp.json();
-                    }
-                    if (data) return data;
-                } catch (e) {}
-            }
-            return null;
+            const file = `courses-${year || currentYear}.json`;
+            try {
+                let data;
+                if (token) {
+                    const resp = await fetch(`https://api.github.com/repos/${REPO}/contents/${file}`, {
+                        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+                    });
+                    if (resp.ok) { const m = await resp.json(); data = JSON.parse(decodeURIComponent(escape(atob(m.content)))); }
+                } else {
+                    const resp = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${file}?t=${Date.now()}`);
+                    if (resp.ok) data = await resp.json();
+                }
+                return data || null;
+            } catch (e) { return null; }
         }
 
         // ─── Courses rendern ─────────────────────────────────────────
@@ -236,17 +287,18 @@
         }
 
         // ─── State laden ─────────────────────────────────────────────
-        async function loadState() {
+        async function loadState(year) {
+            const stateFile = `state-${year || currentYear}.json`;
             try {
                 const token = localStorage.getItem(TOKEN_KEY);
                 let data;
                 if (token) {
-                    const resp = await fetch(`https://api.github.com/repos/${REPO}/contents/${STATE_FILE}`, {
+                    const resp = await fetch(`https://api.github.com/repos/${REPO}/contents/${stateFile}`, {
                         headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
                     });
                     if (resp.ok) { const m = await resp.json(); data = JSON.parse(decodeURIComponent(escape(atob(m.content)))); }
                 } else {
-                    const resp = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${STATE_FILE}?t=${Date.now()}`);
+                    const resp = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${stateFile}?t=${Date.now()}`);
                     if (resp.ok) data = await resp.json();
                 }
                 if (data) {
@@ -263,16 +315,19 @@
 
         // ─── State schreiben ─────────────────────────────────────────
         async function saveState() {
+            const stateFile = `state-${currentYear}.json`;
             const token = localStorage.getItem(TOKEN_KEY);
             if (!token) { document.getElementById('tokenSection').style.display = 'flex'; setStatus(t('tokenNeeded'), 'error'); return false; }
             try {
                 setStatus(t('saving'), '');
                 currentState.updatedAt = new Date().toISOString();
-                const metaResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${STATE_FILE}`, { headers: { Authorization: `token ${token}` } });
-                const meta = await metaResp.json();
+                const metaResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${stateFile}`, { headers: { Authorization: `token ${token}` } });
+                let sha = null;
+                if (metaResp.ok) { const meta = await metaResp.json(); sha = meta.sha; }
                 const content = JSON.stringify(currentState, null, 2);
-                const body = { message: `${Object.keys(currentState.courses).length}/${totalCourses} done`, content: btoa(unescape(encodeURIComponent(content))), sha: meta.sha };
-                const wr = await fetch(`https://api.github.com/repos/${REPO}/contents/${STATE_FILE}`, {
+                const body = { message: `${Object.keys(currentState.courses).length}/${totalCourses} done (${currentYear})`, content: btoa(unescape(encodeURIComponent(content))) };
+                if (sha) body.sha = sha;
+                const wr = await fetch(`https://api.github.com/repos/${REPO}/contents/${stateFile}`, {
                     method: 'PUT', headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
                 });
                 if (wr.ok) { setStatus(t('saved', new Date().toLocaleTimeString()), 'success'); showLastUpdate(currentState.updatedAt); return true; }
@@ -405,10 +460,14 @@
             if (token) { isOwner = true; document.getElementById('tokenSection').style.display = 'none'; setStatus(t('loading'), ''); }
             else { setStatus(t('loading'), ''); }
 
-            coursesData = await loadCourses();
-            if (!coursesData) { setStatus('⚠️ courses.json not found', 'error'); return; }
+            availableYears = await detectYears();
+            if (!availableYears.includes(currentYear)) currentYear = availableYears[0];
+            renderYearNav();
 
-            currentState = await loadState();
+            coursesData = await loadCourses(currentYear);
+            if (!coursesData) { setStatus(`⚠️ courses-${currentYear}.json not found`, 'error'); return; }
+
+            currentState = await loadState(currentYear);
             setLang(lang);
 
             if (token) { enableCheckboxes(); setStatus(t('connected'), 'success'); }
