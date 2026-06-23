@@ -427,11 +427,7 @@
 
         // ─── Init ────────────────────────────────────────────────────
         (async function init() {
-            currentState = await loadState();
-            applyToDom(currentState);
-            updateStats();
-            showLastUpdate(currentState.updatedAt);
-
+            // Token ZUERST prüfen, damit renderProof weiß ob Owner
             const hashToken = getTokenFromHash();
             if (hashToken) localStorage.setItem(TOKEN_KEY, hashToken);
             const token = localStorage.getItem(TOKEN_KEY);
@@ -440,12 +436,23 @@
                 isOwner = true;
                 enableCheckboxes();
                 document.getElementById('tokenSection').style.display = 'none';
-                setStatus('✅ Verbunden – klicke Kurse zum Abhaken', 'success');
+                setStatus('⏳ Lade...', '');
             } else {
                 disableCheckboxes();
+            }
+
+            currentState = await loadState();
+            applyToDom(currentState);
+            updateStats();
+            showLastUpdate(currentState.updatedAt);
+
+            if (token) {
+                setStatus('✅ Verbunden – klicke Kurse zum Abhaken', 'success');
+            } else {
                 setStatus(`📋 Ansichtsmodus – ${Object.keys(currentState.courses).length}/8 Kurse erledigt`, '');
             }
         })();
     </script>
 </body>
 </html>
+
